@@ -103,7 +103,8 @@ func main() {
 		return
 	}
 
-	store := ParcelStore{db: db} // создайте объект ParcelStore функцией NewParcelStore
+	// создайте объект ParcelStore функцией NewParcelStore
+	store := NewParcelStore(db)
 	service := NewParcelService(store)
 
 	// регистрация посылки
