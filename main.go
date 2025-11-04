@@ -103,10 +103,10 @@ func main() {
 		return
 	}
 
+	defer db.Close()
 	// создайте объект ParcelStore функцией NewParcelStore
 	store := NewParcelStore(db)
 	service := NewParcelService(store)
-	defer db.Close()
 
 	// регистрация посылки
 	client := 1
