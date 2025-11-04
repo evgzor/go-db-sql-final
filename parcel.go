@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 )
 
 type ParcelStore struct {
@@ -22,13 +21,11 @@ func (s ParcelStore) Add(p Parcel) (int, error) {
 		sql.Named("address", p.Address),
 		sql.Named("created_at", p.CreatedAt))
 	if err != nil {
-		fmt.Print(err)
 		return 0, err
 	}
 
 	idParcel, err := res.LastInsertId()
 	if err != nil {
-		fmt.Print(err)
 		return 0, err
 	}
 
@@ -46,7 +43,7 @@ func (s ParcelStore) Get(number int) (Parcel, error) {
 	p := Parcel{}
 	err := row.Scan(&p.Client, &p.Status, &p.Address, &p.CreatedAt)
 	if err != nil {
-		return p, err
+		return Parcel{}, err
 	}
 	p.Number = number
 
@@ -61,7 +58,6 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 	var res []Parcel
 	rows, err := s.db.Query("SELECT number, client, status, address, created_at FROM parcel WHERE client = :client", sql.Named("client", client))
 	if err != nil {
-		fmt.Println(err)
 		return res, err
 	}
 	defer rows.Close()
@@ -71,10 +67,13 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 
 		err := rows.Scan(&parcel.Number, &parcel.Client, &parcel.Status, &parcel.Address, &parcel.CreatedAt)
 		if err != nil {
-			fmt.Println(err)
-			return res, err
+			return nil, err
 		}
 		res = append(res, parcel)
+	}
+	// Важно: проверить ошибку после завершения итерации
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return res, nil
@@ -85,11 +84,7 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 	_, err := s.db.Exec("UPDATE parcel SET status = :status WHERE number = :number",
 		sql.Named("number", number),
 		sql.Named("status", status))
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	return nil
+	return err
 }
 
 func (s ParcelStore) SetAddress(number int, address string) error {
@@ -99,11 +94,8 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 		sql.Named("number", number),
 		sql.Named("address", address),
 		sql.Named("status", ParcelStatusRegistered))
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	return nil
+
+	return err
 }
 
 func (s ParcelStore) Delete(number int) error {
